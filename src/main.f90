@@ -71,6 +71,12 @@ program main
   ds2 = ds%subset([ds%iname('x'), ds%iname('v1')])
   call ds2%print()
 
+  print *, ''
+  print *, 'take elements 1,4,5'
+  print *, '==================='
+  ds2 = ds%take([1,4,5])
+  call ds2%print()
+
   contains
 
     real(dp) function mysum(x)

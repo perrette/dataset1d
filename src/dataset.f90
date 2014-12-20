@@ -24,7 +24,7 @@ module dataset_mod
     procedure :: set_index
     procedure :: copy
     procedure :: loc
-    procedure :: slice, compress, subset
+    procedure :: slice, compress, take, subset
     procedure :: getitem, setitem
     procedure :: interp
     procedure :: print => ds_print
@@ -146,44 +146,6 @@ contains
   end function iname
 
   ! ===========================================
-  ! set / get a variable in the dataframe
-  ! ===========================================
-  function getitem(self, name, start, stop_, step) result(array1d)
-    class(Dataset), intent(in) :: self
-    character(len=*), intent(in) :: name
-    real(dp), POINTER :: array1d(:)
-    integer :: ipos
-    integer, optional :: start, step, stop_
-    integer :: start_tmp, step_tmp, stop_tmp
-    start_tmp = 1
-    stop_tmp = self%nlen
-    step_tmp = 1
-    if (present(start)) start_tmp = start
-    if (present(stop_)) stop_tmp = stop_
-    if (present(step)) step_tmp = step
-    ipos = self%iname(trim(name))
-    ! call realloc(array1d, self%nlen)
-    array1d => self%values(start_tmp:stop_tmp:step_tmp, ipos)
-  end function getitem
-
-  subroutine setitem(self, name, array1d,start, stop_, step)
-    class(Dataset), intent(inout) :: self
-    character(len=*), intent(in) :: name
-    real(dp) :: array1d(:)    ! an array
-    integer :: ipos
-    integer, optional :: start, step, stop_
-    integer :: start_tmp, step_tmp, stop_tmp
-    start_tmp = 1
-    stop_tmp = self%nlen
-    step_tmp = 1
-    if (present(start)) start_tmp = start
-    if (present(stop_)) stop_tmp = stop_
-    if (present(step)) step_tmp = step
-    ipos = self%iname(trim(name))
-    self%values(start_tmp:stop_tmp:step_tmp,ipos) = array1d  ! copy
-  end subroutine setitem
-
-  ! ===========================================
   ! functions that return a dataset
   ! ===========================================
 
@@ -240,6 +202,21 @@ contains
     ds%names = self%names
     call ds%set_index(self%iindex)
   end function compress
+
+  ! ===========================================
+  ! extract a few indices from a dataset
+  ! ===========================================
+  type(Dataset) function take(self, indices) result(ds)
+    class(Dataset), intent(in) :: self
+    integer, intent(in) :: indices(:)
+    integer :: i,j,nlen
+    nlen = self%nlen
+
+    call ds%alloc(size(indices), self%nvar)
+    ds%values = self%values(indices, :)
+    ds%names = self%names
+    call ds%set_index(self%iindex)
+  end function take
 
   ! ===========================================
   ! subset of variables in a dataset
@@ -309,5 +286,44 @@ contains
 
   ! end subroutine interp
   end function interp
+
+  ! ===========================================
+  ! set / get an array in the dataframe
+  ! ===========================================
+  function getitem(self, name, start, stop_, step) result(array1d)
+    class(Dataset), intent(in) :: self
+    character(len=*), intent(in) :: name
+    real(dp), POINTER :: array1d(:)
+    integer :: ipos
+    integer, optional :: start, step, stop_
+    integer :: start_tmp, step_tmp, stop_tmp
+    start_tmp = 1
+    stop_tmp = self%nlen
+    step_tmp = 1
+    if (present(start)) start_tmp = start
+    if (present(stop_)) stop_tmp = stop_
+    if (present(step)) step_tmp = step
+    ipos = self%iname(trim(name))
+    ! call realloc(array1d, self%nlen)
+    array1d => self%values(start_tmp:stop_tmp:step_tmp, ipos)
+  end function getitem
+
+  subroutine setitem(self, name, array1d,start, stop_, step)
+    class(Dataset), intent(inout) :: self
+    character(len=*), intent(in) :: name
+    real(dp) :: array1d(:)    ! an array
+    integer :: ipos
+    integer, optional :: start, step, stop_
+    integer :: start_tmp, step_tmp, stop_tmp
+    start_tmp = 1
+    stop_tmp = self%nlen
+    step_tmp = 1
+    if (present(start)) start_tmp = start
+    if (present(stop_)) stop_tmp = stop_
+    if (present(step)) step_tmp = step
+    ipos = self%iname(trim(name))
+    self%values(start_tmp:stop_tmp:step_tmp,ipos) = array1d  ! copy
+  end subroutine setitem
+
 
 end module
