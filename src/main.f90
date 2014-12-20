@@ -2,7 +2,6 @@ program main
 
   use types, only: clen, dp
   use dataset_mod, only: Dataset
-  character(len=clen) :: names(3)
 
   type(Dataset) :: ds, ds2
 

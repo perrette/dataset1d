@@ -20,7 +20,7 @@ module dataset_mod
   contains
 
     procedure :: alloc, dealloc
-    procedure :: iname, inames
+    procedure :: iname
     procedure :: set_index
     procedure :: copy
     procedure :: loc
@@ -144,16 +144,6 @@ contains
       stop
     endif
   end function iname
-
-  function inames(self, names)
-    class(Dataset), intent(in) :: self
-    character(len=clen), intent(in) :: names(:)
-    integer :: inames(size(names))
-    integer :: i
-    do i=1,size(names)
-      inames(i) = self%iname(names(i))
-    enddo
-  end function inames
 
   ! ===========================================
   ! set / get a variable in the dataframe
