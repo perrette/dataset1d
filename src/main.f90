@@ -19,11 +19,12 @@ program main
   ds%names(2) = "v1"
   ds%names(3) = "v2"
 
-  print *, 'setitem'
-  print *, '======='
+  print *, 'setitem/getitem'
+  print *, '==============='
   call ds%setitem('x', [1.d0, 2.d0, 3.d0, 4.d0, 5.d0])
   call ds%setitem('v1',ds%getitem('x')**2)
   call ds%setitem('v2',ds%getitem('x')+0.d0)
+  print *, ds%getitem('v1',start=1,stop_=ds%nlen,step=2)
 
   print *, 'set index'
   print *, '========='

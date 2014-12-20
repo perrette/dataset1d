@@ -155,24 +155,42 @@ contains
     enddo
   end function inames
 
+  ! ===========================================
   ! set / get a variable in the dataframe
-  function getitem(self, name) result(array1d)
+  ! ===========================================
+  function getitem(self, name, start, stop_, step) result(array1d)
     class(Dataset), intent(in) :: self
     character(len=*), intent(in) :: name
     real(dp), POINTER :: array1d(:)
     integer :: ipos
+    integer, optional :: start, step, stop_
+    integer :: start_tmp, step_tmp, stop_tmp
+    start_tmp = 1
+    stop_tmp = self%nlen
+    step_tmp = 1
+    if (present(start)) start_tmp = start
+    if (present(stop_)) stop_tmp = stop_
+    if (present(step)) step_tmp = step
     ipos = self%iname(trim(name))
     ! call realloc(array1d, self%nlen)
-    array1d => self%values(:, ipos)
+    array1d => self%values(start_tmp:stop_tmp:step_tmp, ipos)
   end function getitem
 
-  subroutine setitem(self, name, array1d)
+  subroutine setitem(self, name, array1d,start, stop_, step)
     class(Dataset), intent(inout) :: self
     character(len=*), intent(in) :: name
     real(dp) :: array1d(:)    ! an array
     integer :: ipos
+    integer, optional :: start, step, stop_
+    integer :: start_tmp, step_tmp, stop_tmp
+    start_tmp = 1
+    stop_tmp = self%nlen
+    step_tmp = 1
+    if (present(start)) start_tmp = start
+    if (present(stop_)) stop_tmp = stop_
+    if (present(step)) step_tmp = step
     ipos = self%iname(trim(name))
-    self%values(:,ipos) = array1d  ! copy
+    self%values(start_tmp:stop_tmp:step_tmp,ipos) = array1d  ! copy
   end subroutine setitem
 
   ! ===========================================
@@ -193,9 +211,9 @@ contains
   type(Dataset) function slice(self, start, stop_, step) result(ds)
     class(Dataset), intent(in) :: self
     ! integer, intent(in) :: start, stop_
+    integer :: ipos
     integer, optional :: start, step, stop_
     integer :: start_tmp, step_tmp, stop_tmp
-    integer :: ipos
     start_tmp = 1
     stop_tmp = self%nlen
     step_tmp = 1
