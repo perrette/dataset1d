@@ -84,25 +84,37 @@ contains
     class(Dataset), intent(in) :: self
     integer, optional :: io
     integer :: io_tmp
-    integer :: i, n = 4
+    integer :: i, maxlines = 50, clenmax
+    character(len=clen) :: nvarc, clenc
+    ! determine the output stream (screen or file)
     if (present(io)) then
       io_tmp = io
     else
       io_tmp = 0 !print to screen
     endif
-    ! write(repr,*) "dims:",self%dims,"vars:",self%keys(), "len:",self%len
-    write(io_tmp, *) "Dataset of",self%nvar,"1-D variables (nlen=",self%nlen,")"
-    ! write(*, '("Dataset of",I2,"1-D variables (nlen=",I2,")")') self%nvar, self%nlen
-    ! write(*, "('Dataset of',I2,'1-D variables (nlen=',I2,')')") self%nvar, self%nlen
-    ! write(*, "(Dataset of ,I3, variables)") size(self%vars)
-    write(io_tmp,*) "variables:"
+
+    ! string representation of the number of variables
+    write(nvarc,*) self%nvar
+    ! determine the size of each column
+    clenmax = 0
     do i=1,self%nvar
-      if (self%nlen > n) then
-        write(io_tmp,*) trim(self%names(i)), self%values(1:n,i),'...'
-      else
-        write(io_tmp,*) trim(self%names(i)), self%values(:,i)
-      endif
+      clenmax = max(clenmax, len(trim(self%names(i))))
     enddo
+    write(clenc,*) max(clenmax, 11)
+
+    ! header
+    write(io_tmp, '("1D-Dataset of ",I2," variables (nlen=",I2,")")') self%nvar, self%nlen
+    ! variable names (columns)
+    write(io_tmp,'('//nvarc//'(A'//clenc//',", "))') (trim(self%names(i)), i=1,self%nvar)
+    ! actual  values
+    do i=1,min(self%nlen,maxlines)
+      write(io_tmp, '(I3," ",'//nvarc//'ES'//clenc//'.4)') i, self%values(i,:)
+    enddo
+    ! append last line, for long arrays
+    if (self%nlen > maxlines) then
+      write(io_tmp, *) '...'
+      write(io_tmp, '(I3," ",'//nvarc//'ES'//clenc//'.4)') self%nlen, self%values(self%nlen,:)
+    endif
   end subroutine ds_print
 
   integer function iname(self, name, raise_error) result(ipos)

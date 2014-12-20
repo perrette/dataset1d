@@ -35,8 +35,9 @@ program main
   call ds%print()
 
   print *, 'interpolate'
+  print *, '====='
   ds2 = ds%interp([1.d0, 1.5d0,4.d0,4.3d0, 5.d0])
-  print *, 'newaxis', ds2%index
+  print *, 'newaxis:', ds2%index
   call ds2%print()
 
   print *, ''
@@ -49,6 +50,12 @@ program main
   print *, 'slice'
   print *, '====='
   ds2 = ds%slice(1,ds%nlen,2)
+  call ds2%print()
+
+  print *, ''
+  print *, 'compress'
+  print *, '====='
+  ds2 = ds%compress(ds%x>3)
   call ds2%print()
 
   ! write(*,*) "index:",ds%index
