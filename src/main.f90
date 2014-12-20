@@ -13,7 +13,7 @@ program main
   print *, 'alloc'
   print *, '====='
   call ds%alloc(nlen=5, nvar=3)
-  ! call ds%print()
+  call ds%print()
 
   print *, ''
   print *, 'define variable names'

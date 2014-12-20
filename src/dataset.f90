@@ -10,9 +10,9 @@ module dataset_mod
   public :: Dataset
 
   type metadata_type
-    character(len=clen) :: units
-    character(len=clen) :: long_name 
-    character(len=clen) :: desc
+    character(len=clen) :: units = ""
+    character(len=clen) :: long_name = ""
+    character(len=clen) :: desc = ""
   end type metadata_type
 
   type Dataset
@@ -44,6 +44,8 @@ contains
   subroutine alloc(self, nlen, nvar) 
     class(Dataset), intent(inout) :: self
     integer, intent(in) :: nlen, nvar
+    character(len=clen) :: dummy
+    integer :: i
     self%nvar = nvar
     self%nlen = nlen
     if (allocated(self%names)) deallocate(self%names)
@@ -51,6 +53,12 @@ contains
     allocate(self%values(self%nlen, self%nvar) )
     allocate(self%names(self%nvar) )
     allocate(self%metas(self%nvar) )
+    ! add some default names
+    do i = 1,nvar
+      write(dummy,*)  i
+      self%names(i) = "v"//adjustl(dummy)
+    enddo
+      
   end subroutine alloc
 
   subroutine dealloc(self)
