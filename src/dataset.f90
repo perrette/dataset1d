@@ -297,6 +297,9 @@ contains
     endif
 
     nlen = size(newaxis)
+    call ds%alloc(nlen, self%nvar)
+    ds%names = self%names
+    call ds%set_index(self%iindex)
 
     if (stretched_tmp) then
       call get_interp_weights_stretched(self%index, newaxis, l, w, bounds_error, linear_extrapolation, debug)
@@ -305,21 +308,14 @@ contains
     endif
 
     do i=1,self%nvar
-      values(:, i) = self%values(l,i) + w*(self%values(l+1,i)-self%values(l,i))
+      ds%values(:, i) = self%values(l,i) + w*(self%values(l+1,i)-self%values(l,i))
     enddo
     
     if (.not.linear_extrapolation_tmp) then
       forall(i=1:nlen, w(i)<0.or.w(i)>1)
-        values(i,:) = fill_value_tmp
+        ds%values(i,:) = fill_value_tmp
       end forall
     endif
-
-    ds%values => values
-    ds%nlen = nlen
-    ds%nvar = self%nvar
-    allocate(ds%names(ds%nvar))
-    ds%names = self%names
-    call ds%set_index(self%iindex)
 
   ! end subroutine interp
   end function interp

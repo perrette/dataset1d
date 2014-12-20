@@ -6,19 +6,24 @@ program main
 
   type(Dataset) :: ds, ds2
 
+  print *, '============'
   print *, 'Test Dataset'
   print *, '============'
 
+  print *, ''
   print *, 'alloc'
   print *, '====='
   call ds%alloc(nlen=5, nvar=3)
+  ! call ds%print()
 
+  print *, ''
   print *, 'define variable names'
   print *, '====================='
   ds%names(1) = "x"
   ds%names(2) = "v1"
   ds%names(3) = "v2"
 
+  print *, ''
   print *, 'setitem/getitem'
   print *, '==============='
   call ds%setitem('x', [1.d0, 2.d0, 3.d0, 4.d0, 5.d0])
@@ -26,15 +31,18 @@ program main
   call ds%setitem('v2',ds%getitem('x')+0.d0)
   print *, ds%getitem('v1',start=1,stop_=ds%nlen,step=2)
 
+  print *, ''
   print *, 'set index'
   print *, '========='
   call ds%set_index(ds%iname('x'))
   print *, ds%index
 
+  print *, ''
   print *, 'print'
   print *, '====='
   call ds%print()
 
+  print *, ''
   print *, 'interpolate on ',[1.d0, 1.5d0,4.d0,4.3d0, 5.d0]
   print *, '==========='
   ds2 = ds%interp([1.d0, 1.5d0,4.d0,4.3d0, 5.d0])
