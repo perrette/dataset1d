@@ -20,11 +20,11 @@ module dataset_mod
   contains
 
     procedure :: alloc, dealloc
-    procedure :: iname
+    procedure :: iname, inames
     procedure :: set_index
     procedure :: copy
     procedure :: loc
-    procedure :: slice, compress
+    procedure :: slice, compress, subset
     procedure :: getitem, setitem
     procedure :: interp
     procedure :: print => ds_print
@@ -103,7 +103,7 @@ contains
     write(clenc,*) max(clenmax, 11)
 
     ! header
-    write(io_tmp, '("1D-Dataset of ",I2," variables (nlen=",I2,")")') self%nvar, self%nlen
+    write(io_tmp, '(" 1D-Dataset of ",I2," variables (nlen=",I2,")")') self%nvar, self%nlen
     ! variable names (columns)
     write(io_tmp,'('//nvarc//'(A'//clenc//',", "))') (trim(self%names(i)), i=1,self%nvar)
     ! actual  values
@@ -144,6 +144,16 @@ contains
       stop
     endif
   end function iname
+
+  function inames(self, names)
+    class(Dataset), intent(in) :: self
+    character(len=clen), intent(in) :: names(:)
+    integer :: inames(size(names))
+    integer :: i
+    do i=1,size(names)
+      inames(i) = self%iname(names(i))
+    enddo
+  end function inames
 
   ! set / get a variable in the dataframe
   function getitem(self, name) result(array1d)
@@ -231,10 +241,9 @@ contains
   ! ===========================================
   type(Dataset) function subset(self, inames) result(ds)
     class(Dataset), intent(in) :: self
-    integer :: inames(:)
+    integer, intent(in) :: inames(:)
     call ds%alloc(self%nlen, size(inames))
     ds%values = self%values(:, inames)
-    allocate(ds%names(ds%nvar))
     ds%names = self%names
     call ds%set_index(self%iindex)
   end function subset
@@ -242,7 +251,6 @@ contains
   ! =====================================
   ! Interpolation
   ! =====================================
-
   type(Dataset) function interp(self, newaxis, bounds_error, fill_value, stretched, linear_extrapolation, debug) result(ds)
     class(Dataset), intent(in) :: self
     ! class(Dataset), intent(out) :: ds
