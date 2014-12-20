@@ -9,12 +9,20 @@ module dataset_mod
   private
   public :: Dataset
 
+  type metadata_type
+    character(len=clen) :: units
+    ! character(len=clen) :: long_name 
+    ! character(len=clen) :: desc
+  end type metadata_type
+
   type Dataset
 
     real(dp), dimension(:,:), POINTER :: values
     real(dp), dimension(:), POINTER :: index
     integer :: iindex = 1  ! default position of the index
     character(len=clen), dimension(:), allocatable :: names
+    type(metadata_type), dimension(:), allocatable :: metas
+    ! type(metadata_type), dimension(:), POINTER :: metas
     integer :: nlen, nvar
 
   contains
@@ -39,14 +47,22 @@ contains
     self%nvar = nvar
     self%nlen = nlen
     if (allocated(self%names)) deallocate(self%names)
+    ! print *, 'deallocate metas'
+    ! print *, 'is_allocated?', allocated(self%metas)
+    print *, 'deallocate metas'
+    if (allocated(self%metas)) deallocate(self%metas)
+    print *, 'done'
     allocate(self%values(self%nlen, self%nvar) )
     allocate(self%names(self%nvar) )
+    allocate(self%metas(self%nvar) )
+    ! print *, 'allocate metas'
   end subroutine alloc
 
   subroutine dealloc(self)
     class(Dataset), intent(inout) :: self
     deallocate(self%values)
     deallocate(self%names)
+    deallocate(self%metas)
   end subroutine
 
   subroutine set_index(self, iname)
@@ -155,6 +171,7 @@ contains
     call ds%alloc(self%nlen, self%nvar)
     ds%values = self%values  ! copy
     ds%names = self%names  ! copy
+    ds%metas = self%metas  ! copy
     call ds%set_index(self%iindex)
   end function copy
 
@@ -188,10 +205,13 @@ contains
     ds%nlen = size(ds%values(:,1))
     ds%nvar = size(ds%values(1,:))
     allocate(ds%names(ds%nvar))
+    allocate(ds%metas(ds%nvar))
     if (axis_tmp == 1) then
       ds%names = self%names
+      ds%metas = self%metas
     else
       ds%names = self%names(start_tmp:stop_tmp:step_tmp)
+      ds%metas = self%metas(start_tmp:stop_tmp:step_tmp)
     endif
     call ds%set_index(self%iindex)
   end function slice
@@ -220,6 +240,7 @@ contains
         endif
       enddo
       ds%names = self%names
+      ds%metas = self%metas
       call ds%set_index(self%iindex)
     else
       if (size(mask) /= self%nvar) stop("ERROR: compress: mask must have same size as indexed array's dimension")
@@ -230,6 +251,7 @@ contains
           j = j+1
           ds%values(:,j) = self%values(:,i)
           ds%names(j) = self%names(i)
+          ds%metas(j) = self%metas(i)
         endif
       enddo
       if (mask(self%iindex)) then
@@ -258,11 +280,13 @@ contains
       call ds%alloc(size(indices), self%nvar)
       ds%values = self%values(indices, :)
       ds%names = self%names
+      ds%metas = self%metas
       call ds%set_index(self%iindex)
     else
       call ds%alloc(self%nlen, size(indices))
       ds%values = self%values(:, indices)
       ds%names = self%names(indices)
+      ds%metas = self%metas(indices)
       if (ds%iname(self%names(self%iindex), raise_error=.false.) > 0) then
         call ds%set_index(self%iindex)
       else
@@ -307,6 +331,7 @@ contains
     nlen = size(newaxis)
     call ds%alloc(nlen, self%nvar)
     ds%names = self%names
+    ds%metas = self%metas
     call ds%set_index(self%iindex)
 
     if (stretched_tmp) then
