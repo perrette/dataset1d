@@ -63,13 +63,6 @@ program main
   ds2 = ds%subset([ds%iname('x'), ds%iname('v1')])
   call ds2%print()
 
-  ! write(*,*) "index:",ds%index
-  ! write(*,*) "getitem(v1):",ds%getitem('v1')
-  ! write(*,*) 'x', ds%x
-  ! write(*,*) 'y', ds%y
-  ! write(*,*) 'sum(x)', sum(ds%x)
-  ! write(*,*) 'mysum(x)', mysum(ds%x)  ! pointer but still works with functions written for arrays
-
   contains
 
     real(dp) function mysum(x)

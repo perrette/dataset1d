@@ -217,21 +217,18 @@ contains
   type(Dataset) function compress(self, mask) result(ds)
     class(Dataset), intent(in) :: self
     logical, intent(in) :: mask(:)
-    real(dp), dimension(count(mask), self%nvar), TARGET :: subarray
     integer :: i,j,nlen
     nlen = self%nlen
     if (size(mask) /= nlen) stop("ERROR: compress: mask must have same size as indexed array's first dimension")
+
+    call ds%alloc(count(mask), self%nvar)
     j = 0
     do i=1,nlen
       if (mask(i)) then
         j = j+1
-        subarray(j,:) = self%values(i,:)
+        ds%values(j,:) = self%values(i,:)
       endif
     enddo
-    ds%nvar = self%nvar
-    ds%values => subarray
-    ds%nlen = size(ds%values(:,1))
-    allocate(ds%names(ds%nvar))
     ds%names = self%names
     call ds%set_index(self%iindex)
   end function compress
