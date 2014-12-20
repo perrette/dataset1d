@@ -116,7 +116,7 @@ contains
     ! header
     write(io_tmp, '(" 1D-Dataset of ",I2," variables (nlen=",I2,")")') self%nvar, self%nlen
     ! variable names (columns)
-    write(io_tmp,'('//nvarc//'(A'//clenc//',", "))') (trim(self%names(i)), i=1,self%nvar)
+    write(io_tmp,'('//nvarc//'(A'//clenc//'," "))') (trim(self%names(i)), i=1,self%nvar)
     ! actual  values
     do i=1,min(self%nlen,maxlines)
       write(io_tmp, '(I3," ",'//nvarc//'ES'//clenc//'.4)') i, self%values(i,:)
