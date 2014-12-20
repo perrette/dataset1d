@@ -11,8 +11,8 @@ module dataset_mod
 
   type metadata_type
     character(len=clen) :: units
-    ! character(len=clen) :: long_name 
-    ! character(len=clen) :: desc
+    character(len=clen) :: long_name 
+    character(len=clen) :: desc
   end type metadata_type
 
   type Dataset
@@ -47,15 +47,10 @@ contains
     self%nvar = nvar
     self%nlen = nlen
     if (allocated(self%names)) deallocate(self%names)
-    ! print *, 'deallocate metas'
-    ! print *, 'is_allocated?', allocated(self%metas)
-    print *, 'deallocate metas'
     if (allocated(self%metas)) deallocate(self%metas)
-    print *, 'done'
     allocate(self%values(self%nlen, self%nvar) )
     allocate(self%names(self%nvar) )
     allocate(self%metas(self%nvar) )
-    ! print *, 'allocate metas'
   end subroutine alloc
 
   subroutine dealloc(self)
