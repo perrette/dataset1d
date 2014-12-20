@@ -66,9 +66,9 @@ program main
   call ds2%print()
 
   print *, ''
-  print *, 'subset of x, v1'
-  print *, '==============='
-  ds2 = ds%subset([ds%iname('x'), ds%iname('v1')])
+  print *, 'take x, v1 variables'
+  print *, '===================='
+  ds2 = ds%take([ds%iname('x'), ds%iname('v1')], axis=2)
   call ds2%print()
 
   print *, ''

@@ -24,7 +24,7 @@ module dataset_mod
     procedure :: set_index
     procedure :: copy
     procedure :: loc
-    procedure :: slice, compress, take, subset
+    procedure :: slice, compress, take
     procedure :: getitem, setitem
     procedure :: interp
     procedure :: print => ds_print
@@ -130,6 +130,7 @@ contains
       raise_error_tmp = .true.
     endif
 
+    ipos = 0
     do i=1,self%nvar
       if (trim(self%names(i)) == trim(name)) then
         ipos = i
@@ -137,7 +138,7 @@ contains
       endif
     enddo
 
-    if (raise_error_tmp.and.ipos>self%nvar) then
+    if (raise_error_tmp.and.ipos==0) then
       ! write(*,*) self%keys()
       write(*,*) "Variables:",(trim(self%names(i)), i=1,self%nvar)
       write(*,*) "ERROR: variable not found in dataset:",trim(name)
@@ -160,12 +161,17 @@ contains
   ! ===========================================
   ! slice the dataset along the index dimension
   ! ===========================================
-  type(Dataset) function slice(self, start, stop_, step) result(ds)
+  type(Dataset) function slice(self, start, stop_, step, axis) result(ds)
     class(Dataset), intent(in) :: self
     ! integer, intent(in) :: start, stop_
     integer :: ipos
     integer, optional :: start, step, stop_
     integer :: start_tmp, step_tmp, stop_tmp
+    integer, optional :: axis
+    integer :: axis_tmp
+    axis_tmp = 1
+    if (present(axis)) axis_tmp = axis
+    if (axis_tmp > 2 .or. axis_tmp < 1) stop("ERROR: slice: axis must be 0 or 1")
     start_tmp = 1
     stop_tmp = self%nlen
     step_tmp = 1
@@ -174,61 +180,96 @@ contains
     if (present(step)) step_tmp = step
 
     ds%nvar = self%nvar
-    ds%values => self%values(start_tmp:stop_tmp:step_tmp, :)
+    if (axis_tmp == 1) then
+      ds%values => self%values(start_tmp:stop_tmp:step_tmp, :)
+    else
+      ds%values => self%values(:, start_tmp:stop_tmp:step_tmp)
+    endif
     ds%nlen = size(ds%values(:,1))
+    ds%nvar = size(ds%values(1,:))
     allocate(ds%names(ds%nvar))
-    ds%names = self%names
+    if (axis_tmp == 1) then
+      ds%names = self%names
+    else
+      ds%names = self%names(start_tmp:stop_tmp:step_tmp)
+    endif
     call ds%set_index(self%iindex)
   end function slice
 
   ! ===========================================
   ! extract dataset when a mask is true
   ! ===========================================
-  type(Dataset) function compress(self, mask) result(ds)
+  type(Dataset) function compress(self, mask, axis) result(ds)
     class(Dataset), intent(in) :: self
     logical, intent(in) :: mask(:)
-    integer :: i,j,nlen
-    nlen = self%nlen
-    if (size(mask) /= nlen) stop("ERROR: compress: mask must have same size as indexed array's first dimension")
+    integer :: i,j, nlen, nvar, n
+    integer, optional :: axis
+    integer :: axis_tmp
+    axis_tmp = 1
+    if (present(axis)) axis_tmp = axis
+    if (axis_tmp > 2 .or. axis_tmp < 1) stop("ERROR: slice: axis must be 0 or 1")
 
-    call ds%alloc(count(mask), self%nvar)
-    j = 0
-    do i=1,nlen
-      if (mask(i)) then
-        j = j+1
-        ds%values(j,:) = self%values(i,:)
+    if (axis_tmp == 1) then
+      if (size(mask) /= self%nlen) stop("ERROR: compress: mask must have same size as indexed array's dimension")
+      call ds%alloc(count(mask), self%nvar)
+      j = 0
+      do i=1,size(mask)
+        if (mask(i)) then
+          j = j+1
+          ds%values(j,:) = self%values(i,:)
+        endif
+      enddo
+      ds%names = self%names
+      call ds%set_index(self%iindex)
+    else
+      if (size(mask) /= self%nvar) stop("ERROR: compress: mask must have same size as indexed array's dimension")
+      call ds%alloc(self%nlen, count(mask))
+      j = 0
+      do i=1,size(mask)
+        if (mask(i)) then
+          j = j+1
+          ds%values(:,j) = self%values(:,i)
+          ds%names(j) = self%names(i)
+        endif
+      enddo
+      if (mask(self%iindex)) then
+        call ds%set_index(self%iindex)
+      else
+        call ds%set_index(1)
       endif
-    enddo
-    ds%names = self%names
-    call ds%set_index(self%iindex)
+    endif
   end function compress
 
   ! ===========================================
   ! extract a few indices from a dataset
   ! ===========================================
-  type(Dataset) function take(self, indices) result(ds)
+  type(Dataset) function take(self, indices, axis) result(ds)
     class(Dataset), intent(in) :: self
     integer, intent(in) :: indices(:)
     integer :: i,j,nlen
+    integer, optional :: axis
+    integer :: axis_tmp
+    axis_tmp = 1
+    if (present(axis)) axis_tmp = axis
+    if (axis_tmp > 2 .or. axis_tmp < 1) stop("ERROR: slice: axis must be 0 or 1")
     nlen = self%nlen
 
-    call ds%alloc(size(indices), self%nvar)
-    ds%values = self%values(indices, :)
-    ds%names = self%names
-    call ds%set_index(self%iindex)
+    if (axis_tmp == 1) then
+      call ds%alloc(size(indices), self%nvar)
+      ds%values = self%values(indices, :)
+      ds%names = self%names
+      call ds%set_index(self%iindex)
+    else
+      call ds%alloc(self%nlen, size(indices))
+      ds%values = self%values(:, indices)
+      ds%names = self%names(indices)
+      if (ds%iname(self%names(self%iindex), raise_error=.false.) > 0) then
+        call ds%set_index(self%iindex)
+      else
+        call ds%set_index(1)
+      endif
+    endif
   end function take
-
-  ! ===========================================
-  ! subset of variables in a dataset
-  ! ===========================================
-  type(Dataset) function subset(self, inames) result(ds)
-    class(Dataset), intent(in) :: self
-    integer, intent(in) :: inames(:)
-    call ds%alloc(self%nlen, size(inames))
-    ds%values = self%values(:, inames)
-    ds%names = self%names
-    call ds%set_index(self%iindex)
-  end function subset
 
   ! =====================================
   ! Interpolation
