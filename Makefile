@@ -6,7 +6,8 @@ BINDIR = bin
 EXE = $(BINDIR)/a.out
 LDFLAGS = -J./$(OBJDIR)
 
-SRC = $(wildcard $(SRCDIR)/*f90)
+# SRC = $(wildcard $(SRCDIR)/*f90)
+SRC = $(addprefix $(SRCDIR)/, utils.f90 dataset.f90 main.f90)
 OBJ = $(SRC:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
 
 $(EXE): $(OBJ)

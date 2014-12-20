@@ -11,27 +11,52 @@ program main
 
   ! type(Dataset) :: ds
   type(Glacier) :: ds
+  type(Dataset) :: ds2
 
-  names(1) = "x"
-  names(2) = "v1"
-  names(3) = "v2"
-  ! print *, names
+  print *, 'alloc'
+  call ds%alloc(nlen=5, nvar=3)
+  print *, 'names'
+  ds%names(1) = "x"
+  ds%names(2) = "v1"
+  ds%names(3) = "v2"
 
-  call ds%alloc(names, 5)
   ds%x => ds%values(:,1)
   ds%y => ds%values(:,2)
-  call ds%setitem('x',[5.d0,123.d0,67.d0,5.d0,11.d0])
-  call ds%setitem('v1',ds%x**2)
-  ds%index(1) = -99
-  call ds%set_index('x')
 
-  write(*,*) ds%repr()
-  write(*,*) "index:",ds%index
-  write(*,*) "getitem(v1):",ds%getitem('v1')
-  write(*,*) 'x', ds%x
-  write(*,*) 'y', ds%y
-  write(*,*) 'sum(x)', sum(ds%x)
-  write(*,*) 'mysum(x)', mysum(ds%x)  ! pointer but still works with functions written for arrays
+  print *, 'setitem'
+  call ds%setitem('x', [1.d0, 2.d0, 3.d0, 4.d0, 5.d0])
+  call ds%setitem('v1',ds%x**2)
+  call ds%setitem('v2',ds%x+0.d0)
+  print *, 'set index'
+  call ds%set_index(ds%iname('x'))
+  print *, ds%index
+
+  print *, 'print'
+  call ds%print()
+
+  print *, 'interpolate'
+  ds2 = ds%interp([1.d0, 1.5d0,4.d0,4.3d0, 5.d0])
+  print *, 'newaxis', ds2%index
+  call ds2%print()
+
+  print *, ''
+  print *, 'copy'
+  print *, '===='
+  ds2 = ds%copy()
+  call ds2%print()
+
+  print *, ''
+  print *, 'slice'
+  print *, '====='
+  ds2 = ds%slice(1,ds%nlen,2)
+  call ds2%print()
+
+  ! write(*,*) "index:",ds%index
+  ! write(*,*) "getitem(v1):",ds%getitem('v1')
+  ! write(*,*) 'x', ds%x
+  ! write(*,*) 'y', ds%y
+  ! write(*,*) 'sum(x)', sum(ds%x)
+  ! write(*,*) 'mysum(x)', mysum(ds%x)  ! pointer but still works with functions written for arrays
 
   contains
 
