@@ -20,3 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+External pieces of software also included
+=========================================
+ncio.f90 : see original repository and MIT LICENCE file at 
+https://github.com/alex-robinson/ncio

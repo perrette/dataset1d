@@ -40,6 +40,10 @@ program main
   print *, 'print'
   print *, '====='
   call ds%print()
+  print *, 'large variable'
+  print *, '=============='
+  call ds2%alloc(nlen=1000000, nvar=5)
+  call ds2%print()
 
   print *, ''
   print *, 'interpolate on ',[1.d0, 1.5d0,4.d0,4.3d0, 5.d0]
@@ -75,6 +79,17 @@ program main
   print *, 'take elements 1,4,5'
   print *, '==================='
   ds2 = ds%take([1,4,5])
+  call ds2%print()
+
+  print *, ''
+  print *, 'write to netCDF'
+  print *, '==============='
+  call ds%write_nc('test.nc')
+
+  print *, ''
+  print *, 'read from netCDF'
+  print *, '================'
+  call ds2%read_nc('test.nc')
   call ds2%print()
 
   contains

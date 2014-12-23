@@ -3,6 +3,8 @@ module dataset_mod
 
   use types, only: dp, clen, MISSING_VALUE
   use interp_mod, only: get_interp_weights_stretched, get_interp_weights, locate
+  use ncio, only: nc_read, nc_write, nc_dimensions, nc_variables, nc_write_dim, nc_create, nc_open, nc_close, nc_size
+  ! use netcdf
 
   implicit none
 
@@ -12,7 +14,6 @@ module dataset_mod
   type metadata_type
     character(len=clen) :: units = ""
     character(len=clen) :: long_name = ""
-    character(len=clen) :: desc = ""
   end type metadata_type
 
   type Dataset
@@ -36,6 +37,7 @@ module dataset_mod
     procedure :: getitem, setitem
     procedure :: interp
     procedure :: print => ds_print
+    procedure :: write_nc, read_nc
 
   end type
 
@@ -104,7 +106,7 @@ contains
     integer, optional :: io
     integer :: io_tmp
     integer :: i, maxlines = 50, clenmax
-    character(len=clen) :: nvarc, clenc
+    character(len=clen) :: nvarc, clenmaxc, nlenc
     ! determine the output stream (screen or file)
     if (present(io)) then
       io_tmp = io
@@ -114,25 +116,27 @@ contains
 
     ! string representation of the number of variables
     write(nvarc,*) self%nvar
+    write(nlenc,*) self%nlen
     ! determine the size of each column
     clenmax = 0
     do i=1,self%nvar
       clenmax = max(clenmax, len(trim(self%names(i))))
     enddo
-    write(clenc,*) max(clenmax, 11)
+    write(clenmaxc,*) max(clenmax, 11)
 
     ! header
-    write(io_tmp, '(" 1D-Dataset of ",I2," variables (nlen=",I2,")")') self%nvar, self%nlen
+    ! write(io_tmp, '(" Dataset(nvar=",I2,", nlen=",I5,")")') self%nvar, self%nlen
+    write(io_tmp, *) "Dataset(nvar=",trim(adjustl(nvarc)),", nlen=",trim(adjustl(nlenc)),")"
     ! variable names (columns)
-    write(io_tmp,'('//nvarc//'(A'//clenc//'," "))') (trim(self%names(i)), i=1,self%nvar)
+    write(io_tmp,'('//nvarc//'(A'//clenmaxc//'," "))') (trim(self%names(i)), i=1,self%nvar)
     ! actual  values
     do i=1,min(self%nlen,maxlines)
-      write(io_tmp, '(I3," ",'//nvarc//'ES'//clenc//'.4)') i, self%values(i,:)
+      write(io_tmp, '(I3," ",'//nvarc//'ES'//clenmaxc//'.4)') i, self%values(i,:)
     enddo
     ! append last line, for long arrays
     if (self%nlen > maxlines) then
       write(io_tmp, *) '...'
-      write(io_tmp, '(I3," ",'//nvarc//'ES'//clenc//'.4)') self%nlen, self%values(self%nlen,:)
+      write(io_tmp, '(I3," ",'//nvarc//'ES'//clenmaxc//'.4)') self%nlen, self%values(self%nlen,:)
     endif
   end subroutine ds_print
 
@@ -394,5 +398,56 @@ contains
     self%values(start_tmp:stop_tmp:step_tmp,ipos) = array1d  ! copy
   end subroutine setitem
 
+  subroutine write_nc(self, fname, append)
+    class(Dataset), intent(in) :: self
+    character(len=*), intent(in) :: fname
+    character(len=clen) :: dim1
+    integer :: ncid, i
+    logical, optional :: append
+    logical :: append_tmp
+    if (present(append)) then
+      append_tmp = append
+    else
+      append_tmp = .false.
+    endif
+    dim1 = self%names(self%iindex) ! dimension name
+    if (.not.append_tmp) then
+      call nc_create(fname)
+      call nc_write_dim(fname, dim1, self%index)
+    endif
+    call nc_open(fname,ncid)
+    do i=1,self%nvar
+      call nc_write(fname, self%names(i), self%values(:,i), &
+        long_name=self%metas(i)%long_name, &
+        dim1=dim1, &
+        units=self%metas(i)%units, &
+        ncid=ncid)
+    enddo
+    call nc_close(ncid)
+  end subroutine write_nc
+
+  subroutine read_nc(self, fname)
+    ! call nc_check ( nf90_inquire_variable(ncid, v%varid, ndims=ndims) )
+    class(Dataset), intent(out) :: self
+    character(len=*), intent(in) :: fname
+    character(len=256), allocatable :: names(:)
+    character(len=256), allocatable :: dims(:)
+    integer :: ncid, nlen, i
+    names = nc_variables(fname)
+    dims = nc_dimensions(fname)
+    if (size(dims) /= 1) stop("ERROR: can only read 1-dimension files as a Dataset")
+    nlen = nc_size(fname, dims(1))
+    call self%alloc(nlen, size(names))
+    self%names = names
+    call self%set_index(self%iname(dims(1)))
+    call nc_open(fname,ncid)
+    do i=1,self%nvar
+      call nc_read(fname,names(i),self%values(:,i),ncid=ncid)
+      call nc_read(fname,names(i),self%values(:,i),ncid=ncid)
+    enddo
+    call nc_close(ncid)
+    deallocate(names)
+    deallocate(dims)
+  end subroutine read_nc
 
 end module
