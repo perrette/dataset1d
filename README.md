@@ -40,7 +40,7 @@ Includes pretty printing or arrays a la pandas' DataFrame
       4  4.0000E+00 1.6000E+01 4.0000E+00
       5  5.0000E+00 2.5000E+01 5.0000E+00
 
-As well as netCDF I/O
+As well as netCDF I/O based on [Alex Robinson's ncio module](https://github.com/alex-robinson/ncio)
 
     call ds%write_nc('test.nc')
     call ds%read_nc('test.nc')
