@@ -5,6 +5,12 @@ program main
 
   type(Dataset) :: ds, ds2
 
+  print *, 'dataset1d'
+  print *, '========='
+  print *, 'A handy in-memory netCDF Dataset for fortran, for 1-D arrays only '
+  print *, '(so making it more similar to a pandas DataFrame).'
+  print *, ''
+
   print *, '============'
   print *, 'Test Dataset'
   print *, '============'

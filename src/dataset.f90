@@ -126,17 +126,17 @@ contains
 
     ! header
     ! write(io_tmp, '(" Dataset(nvar=",I2,", nlen=",I5,")")') self%nvar, self%nlen
-    write(io_tmp, *) "Dataset(nvar=",trim(adjustl(nvarc)),", nlen=",trim(adjustl(nlenc)),")"
+    write(*, *) "Dataset(nvar=",trim(adjustl(nvarc)),", nlen=",trim(adjustl(nlenc)),")"
     ! variable names (columns)
-    write(io_tmp,'('//nvarc//'(A'//clenmaxc//'," "))') (trim(self%names(i)), i=1,self%nvar)
+    write(*,'('//nvarc//'(A'//clenmaxc//'," "))') (trim(self%names(i)), i=1,self%nvar)
     ! actual  values
     do i=1,min(self%nlen,maxlines)
-      write(io_tmp, '(I3," ",'//nvarc//'ES'//clenmaxc//'.4)') i, self%values(i,:)
+      write(*, '(I3," ",'//nvarc//'ES'//clenmaxc//'.4)') i, self%values(i,:)
     enddo
     ! append last line, for long arrays
     if (self%nlen > maxlines) then
-      write(io_tmp, *) '...'
-      write(io_tmp, '(I3," ",'//nvarc//'ES'//clenmaxc//'.4)') self%nlen, self%values(self%nlen,:)
+      write(*, *) '...'
+      write(*, '(I3," ",'//nvarc//'ES'//clenmaxc//'.4)') self%nlen, self%values(self%nlen,:)
     endif
   end subroutine ds_print
 
